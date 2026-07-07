@@ -1,0 +1,30 @@
+# Yocto build output
+build*/
+tmp/
+sstate-cache/
+downloads/
+cache/
+
+# Deploy images
+*.wic
+*.wic.bz2
+*.wic.xz
+*.sdimg
+*.ext3
+*.ext4
+*.tar.bz2
+*.tar.zst
+*.bmap
+
+# Logs
+*.log
+bitbake-cookerdaemon.log
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
