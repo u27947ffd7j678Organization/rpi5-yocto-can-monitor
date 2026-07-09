@@ -1,36 +1,38 @@
-# Troubleshooting
+# トラブルシュート
+
+[English](troubleshooting.en.md) | 日本語
 
 ## Timed out waiting for device /dev/mmcblk0p1
 
-### Problem
+### 現象
 
-During boot, systemd waits for a fixed SD card boot partition:
+起動中、systemdが固定のSDカードbootパーティションを待ち続けます。
 
 ```text
 Timed out waiting for device /dev/mmcblk0p1
 ```
 
-This can delay or block a USB-booted system.
+USBブート時に、この待ち時間によって起動が遅延したり、停止したように見えたりします。
 
-### Cause
+### 原因
 
-The default `fstab` referenced the SD card boot partition as a required device. When booting from USB, that partition may not exist, even though the USB root filesystem is valid.
+デフォルトの `fstab` が、SDカードのbootパーティションを必須デバイスとして参照していました。USBから起動する場合、そのパーティションが存在しないことがあります。一方で、USB上のroot filesystem自体は正常です。
 
-### Solution
+### 対応
 
-Extend `base-files` with a bbappend:
+`base-files` をbbappendで拡張します。
 
 ```text
 recipes-core/base-files/base-files_%.bbappend
 ```
 
-Install a custom `fstab`:
+カスタム `fstab` をインストールします。
 
 ```text
 recipes-core/base-files/base-files/fstab
 ```
 
-The custom file keeps the root filesystem on `/dev/root`, and marks boot partitions as optional:
+カスタム `fstab` ではroot filesystemを `/dev/root` のまま扱い、bootパーティションを任意扱いにします。
 
 ```fstab
 /dev/root      /          auto  defaults  1  1
@@ -38,28 +40,28 @@ The custom file keeps the root filesystem on `/dev/root`, and marks boot partiti
 /dev/sda1      /boot-usb  vfat  defaults,nofail,x-systemd.device-timeout=1s  0  0
 ```
 
-### Result
+### 結果
 
-- USB boot works
-- SD boot still works
-- Missing boot media does not block startup
-- Login prompt appears correctly
+- USBブートが成功する
+- SDカードブートも引き続き利用できる
+- 存在しないbootメディアで起動がブロックされない
+- ログインプロンプトが正常に表示される
 
-## Wi-Fi Does Not Connect
+## Wi-Fiに接続できない
 
-Check that the real `.nmconnection` file exists before building:
+ビルド前に実際の `.nmconnection` ファイルが存在することを確認します。
 
 ```bash
 ls recipes-connectivity/networkmanager/networkmanager-config/files/*.nmconnection
 ```
 
-Check that the installed profile is mode `0600` in the recipe:
+インストールされるプロファイルがレシピ内でmode `0600` になっていることを確認します。
 
 ```bitbake
 install -m 600 ...
 ```
 
-On the target:
+ターゲット上で確認します。
 
 ```bash
 systemctl status NetworkManager
@@ -68,19 +70,19 @@ nmcli connection show
 journalctl -u NetworkManager -b
 ```
 
-## SSH Key Login Fails
+## SSH鍵ログインに失敗する
 
-Confirm that the real key file was copied before building:
+ビルド前に実際の鍵ファイルをコピーしていることを確認します。
 
 ```bash
 ls recipes-core/ssh/root-authorized-keys/files/authorized_keys
 ```
 
-On the target, verify that the key was installed:
+ターゲット上で鍵がインストールされていることを確認します。
 
 ```bash
 ls -l /home/root/.ssh/authorized_keys
 ```
 
-The file should be readable only by root.
+このファイルはrootだけが読める権限になっている必要があります。
 

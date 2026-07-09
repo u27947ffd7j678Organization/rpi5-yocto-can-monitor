@@ -1,51 +1,53 @@
-# Root authorized_keys
+# root authorized_keys
 
-The image includes a small recipe that installs an SSH public key for the root user.
+[English](authorized-keys.en.md) | 日本語
 
-## Recipe
+このイメージには、rootユーザー向けのSSH公開鍵を配置する小さなレシピを含めています。
+
+## レシピ
 
 ```text
 recipes-core/ssh/root-authorized-keys/root-authorized-keys.bb
 ```
 
-The recipe installs:
+このレシピは以下へファイルをインストールします。
 
 ```text
 /home/root/.ssh/authorized_keys
 ```
 
-with mode `0600`.
+ファイル権限は `0600` です。
 
-## Local Key Template
+## ローカル鍵テンプレート
 
-The repository includes only a template:
+リポジトリにはテンプレートだけを含めています。
 
 ```text
 recipes-core/ssh/root-authorized-keys/files/authorized_keys.example
 ```
 
-Copy it before building:
+ビルド前にコピーします。
 
 ```bash
 cp recipes-core/ssh/root-authorized-keys/files/authorized_keys.example \
    recipes-core/ssh/root-authorized-keys/files/authorized_keys
 ```
 
-Then replace the placeholder with your public key:
+その後、プレースホルダーを自分の公開鍵へ置き換えます。
 
 ```text
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... your-name@example
 ```
 
-Do not commit the real `authorized_keys` file.
+実際の `authorized_keys` はコミットしません。
 
-## Passwordless SSH
+## パスワードレスSSH
 
-After the image boots and Wi-Fi is connected:
+イメージが起動し、Wi-Fi接続が完了したら以下でログインします。
 
 ```bash
 ssh root@<raspberry-pi-ip>
 ```
 
-The login should use the private key corresponding to the public key installed in the image.
+イメージに組み込んだ公開鍵に対応する秘密鍵でログインできる状態になります。
 

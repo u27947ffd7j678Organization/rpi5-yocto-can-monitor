@@ -1,53 +1,55 @@
 # NetworkManager
 
-The image installs NetworkManager and a custom Wi-Fi connection profile so the Raspberry Pi 5 connects to Wi-Fi automatically after boot.
+[English](networkmanager.en.md) | 日本語
 
-## Image Package
+このイメージではNetworkManagerとカスタムWi-Fi接続プロファイルを導入し、Raspberry Pi 5が起動後に自動でWi-Fiへ接続できるようにしています。
 
-The custom image recipe installs:
+## イメージへ追加するパッケージ
+
+カスタムイメージレシピでは以下をインストールします。
 
 ```bitbake
 networkmanager
 networkmanager-config
 ```
 
-## Configuration Recipe
+## 設定レシピ
 
-`recipes-connectivity/networkmanager/networkmanager-config/networkmanager-config.bb` installs a keyfile connection profile into:
+`recipes-connectivity/networkmanager/networkmanager-config/networkmanager-config.bb` は、keyfile形式の接続プロファイルを以下へインストールします。
 
 ```text
 /etc/NetworkManager/system-connections/
 ```
 
-The installed file must use mode `0600`; NetworkManager ignores insecure connection profiles.
+インストールされるファイルはmode `0600` である必要があります。権限が緩い接続プロファイルはNetworkManagerに無視されます。
 
-## Local Wi-Fi Template
+## ローカルWi-Fiテンプレート
 
-The repository includes:
+リポジトリにはテンプレートだけを含めています。
 
 ```text
 recipes-connectivity/networkmanager/networkmanager-config/files/Buffalo-5G-E960.nmconnection.example
 ```
 
-Copy it before building:
+ビルド前にコピーします。
 
 ```bash
 cp recipes-connectivity/networkmanager/networkmanager-config/files/Buffalo-5G-E960.nmconnection.example \
    recipes-connectivity/networkmanager/networkmanager-config/files/Buffalo-5G-E960.nmconnection
 ```
 
-Then replace:
+その後、以下を実環境の値へ置き換えます。
 
 ```ini
 ssid=YOUR_WIFI_SSID
 psk=YOUR_WIFI_PASSWORD
 ```
 
-The real `.nmconnection` file is ignored by Git and should not be committed.
+実際の `.nmconnection` ファイルはGitで無視されるため、コミットしません。
 
-## Verification
+## 動作確認
 
-After boot:
+起動後に以下を確認します。
 
 ```bash
 nmcli device
@@ -56,10 +58,10 @@ ip addr show wlan0
 systemctl status NetworkManager
 ```
 
-Expected result:
+期待される結果:
 
-- `wlan0` is managed by NetworkManager
-- the configured connection appears in `nmcli connection show`
-- `wlan0` receives an IP address
-- Wi-Fi connects automatically after boot
+- `wlan0` がNetworkManagerで管理されている
+- 設定した接続が `nmcli connection show` に表示される
+- `wlan0` にIPアドレスが割り当てられる
+- 起動後にWi-Fiへ自動接続される
 

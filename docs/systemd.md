@@ -1,20 +1,22 @@
 # systemd
 
-The platform uses systemd instead of the default SysVinit-style setup.
+[English](systemd.en.md) | 日本語
 
-## Why systemd
+このプラットフォームでは、デフォルトのSysVinit系構成ではなくsystemdを使用します。
 
-The target system is expected to run multiple long-lived services:
+## systemdを採用した理由
+
+ターゲットシステムでは、複数の常駐サービスを扱う予定です。
 
 - NetworkManager
 - SSH
-- future CAN monitor application services
-- future Django web monitor services
-- future logging utilities
+- 今後追加するCAN monitor application service
+- 今後追加するDjango web monitor service
+- 今後追加するログ出力ユーティリティ
 
-systemd provides a consistent service model, dependency handling, logs through `journalctl`, and a standard way to enable application units at boot.
+systemdを使うことで、サービス管理、依存関係の制御、`journalctl` によるログ確認、起動時のunit有効化を標準的な方法で扱えます。
 
-## local.conf Settings
+## local.conf設定
 
 ```conf
 DISTRO_FEATURES:append = " systemd"
@@ -26,39 +28,39 @@ VIRTUAL-RUNTIME_initscripts = ""
 DISTRO_FEATURES:append = " usrmerge"
 ```
 
-`usrmerge` is enabled because many modern systemd-oriented packages expect a merged `/usr` layout.
+`usrmerge` は、systemdを前提にした多くのパッケージが `/usr` 統合レイアウトを期待するため有効化しています。
 
-## Useful Commands
+## よく使うコマンド
 
-Check the systemd version:
+systemdのバージョン確認:
 
 ```bash
 systemctl --version
 ```
 
-List failed units:
+失敗しているunitの確認:
 
 ```bash
 systemctl --failed
 ```
 
-Check a service:
+サービス状態の確認:
 
 ```bash
 systemctl status NetworkManager
 ```
 
-Read boot logs:
+起動ログの確認:
 
 ```bash
 journalctl -b
 ```
 
-Follow live logs:
+リアルタイムログの追跡:
 
 ```bash
 journalctl -f
 ```
 
-These commands are the baseline for debugging boot, network, SSH, and future application services.
+これらは、起動、ネットワーク、SSH、今後追加するアプリケーションサービスのデバッグで基本になるコマンドです。
 

@@ -59,11 +59,11 @@ meta-rpi5-can-monitor/
 ├── tools/
 │   └── extract-wic.sh
 └── docs/
-    ├── authorized-keys.md
-    ├── custom-layer.md
-    ├── networkmanager.md
-    ├── systemd.md
-    └── troubleshooting.md
+    ├── authorized-keys.md / authorized-keys.en.md
+    ├── custom-layer.md / custom-layer.en.md
+    ├── networkmanager.md / networkmanager.en.md
+    ├── systemd.md / systemd.en.md
+    └── troubleshooting.md / troubleshooting.en.md
 ```
 
 ## Layer Setup
@@ -198,11 +198,11 @@ Expected result:
 
 ## Documentation
 
-- [Custom layer design](docs/custom-layer.md)
-- [systemd migration](docs/systemd.md)
-- [NetworkManager and Wi-Fi auto-connect](docs/networkmanager.md)
-- [Root authorized_keys recipe](docs/authorized-keys.md)
-- [Troubleshooting](docs/troubleshooting.md)
+- [Custom layer design](docs/custom-layer.en.md)
+- [systemd migration](docs/systemd.en.md)
+- [NetworkManager and Wi-Fi auto-connect](docs/networkmanager.en.md)
+- [Root authorized_keys recipe](docs/authorized-keys.en.md)
+- [Troubleshooting](docs/troubleshooting.en.md)
 
 ## Next Steps
 
@@ -223,4 +223,3 @@ This project demonstrates:
 - systemd and NetworkManager integration
 - Secure handling of local credentials through templates
 - A staged path from base Linux image to application-specific embedded platform
-

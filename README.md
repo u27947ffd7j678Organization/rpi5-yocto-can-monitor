@@ -59,11 +59,11 @@ meta-rpi5-can-monitor/
 ├── tools/
 │   └── extract-wic.sh
 └── docs/
-    ├── authorized-keys.md
-    ├── custom-layer.md
-    ├── networkmanager.md
-    ├── systemd.md
-    └── troubleshooting.md
+    ├── authorized-keys.md / authorized-keys.en.md
+    ├── custom-layer.md / custom-layer.en.md
+    ├── networkmanager.md / networkmanager.en.md
+    ├── systemd.md / systemd.en.md
+    └── troubleshooting.md / troubleshooting.en.md
 ```
 
 ## レイヤ構成
@@ -223,4 +223,3 @@ ssh root@<raspberry-pi-ip>
 - systemd / NetworkManagerの組み込み
 - テンプレート化による秘密情報の安全な扱い
 - ベースLinuxイメージからアプリケーション専用組込みプラットフォームへ発展させる設計
-

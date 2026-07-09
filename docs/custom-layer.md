@@ -1,8 +1,10 @@
-# Custom Layer
+# カスタムレイヤ
 
-`meta-rpi5-can-monitor` separates board bring-up, image composition, connectivity, and access configuration into small recipes.
+[English](custom-layer.en.md) | 日本語
 
-## Structure
+`meta-rpi5-can-monitor` は、ボード bring-up、イメージ構成、ネットワーク、SSHアクセス設定を小さなレシピに分けて管理するカスタムYoctoレイヤです。
+
+## 構成
 
 ```text
 meta-rpi5-can-monitor/
@@ -17,9 +19,9 @@ meta-rpi5-can-monitor/
 └── docs
 ```
 
-## Layer Metadata
+## レイヤメタデータ
 
-`conf/layer.conf` registers the layer collection:
+`conf/layer.conf` でレイヤコレクションを登録します。
 
 ```conf
 BBFILE_COLLECTIONS += "meta-rpi5-can-monitor"
@@ -27,22 +29,22 @@ BBFILE_PRIORITY_meta-rpi5-can-monitor = "6"
 LAYERSERIES_COMPAT_meta-rpi5-can-monitor = "scarthgap"
 ```
 
-## Recipe Separation
+## レシピ分割の考え方
 
-Recipes are split by function:
+機能ごとにレシピを分けています。
 
-- `recipes-core/images`: image composition and package selection
-- `recipes-core/base-files`: base filesystem customization such as `fstab`
-- `recipes-core/ssh`: root SSH key installation
-- `recipes-connectivity/networkmanager`: Wi-Fi and NetworkManager configuration
-- `tools`: host-side helper scripts
-- `docs`: design notes and verification steps
+- `recipes-core/images`: イメージ構成と追加パッケージの選定
+- `recipes-core/base-files`: `fstab` などのベースファイルシステム設定
+- `recipes-core/ssh`: rootユーザー向けSSH公開鍵の配置
+- `recipes-connectivity/networkmanager`: Wi-FiとNetworkManager設定
+- `tools`: ホスト側で使う補助スクリプト
+- `docs`: 設計メモと動作確認手順
 
-This keeps the image recipe readable while allowing each system feature to evolve independently.
+この分割により、イメージレシピを読みやすく保ちながら、各機能を独立して拡張できます。
 
-## Image Recipe
+## イメージレシピ
 
-`rpi5-can-monitor-image.bb` extends `core-image-base` and adds:
+`rpi5-can-monitor-image.bb` は `core-image-base` を拡張し、以下を追加します。
 
 - OpenSSH
 - Python 3
@@ -50,8 +52,8 @@ This keeps the image recipe readable while allowing each system feature to evolv
 - can-utils
 - iproute2
 - NetworkManager
-- Wi-Fi connection configuration
+- Wi-Fi接続設定
 - root authorized keys
 
-The next application-specific layer work can add Qt6, CAN monitor services, Django monitoring, and logging utilities without mixing them into base board bring-up.
+今後は、Qt6、CAN monitor service、Django monitor、ログ出力ユーティリティなどを、ベースのボード bring-up と分離したまま追加できます。
 
