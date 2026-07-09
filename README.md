@@ -1,38 +1,40 @@
 # Raspberry Pi 5 Yocto CAN Monitor Platform
 
-A custom Yocto Linux platform for Raspberry Pi 5, built as the foundation for an embedded CAN monitoring system.
+[English](README.en.md) | 日本語
 
-This repository presents a reusable Yocto layer, image recipe, system configuration, and supporting documentation for a Raspberry Pi 5 target that boots from USB, connects to Wi-Fi automatically, supports SSH access, and includes the core tools needed for CAN-oriented application development.
+Raspberry Pi 5 向けに構築した、CAN監視システム用のカスタムYocto Linuxプラットフォームです。
 
-## Project Snapshot
+このリポジトリでは、USBブート、Wi-Fi自動接続、SSHログイン、CAN開発に必要な基本ツールを備えたRaspberry Pi 5向けYocto環境を、再利用可能なカスタムレイヤとしてまとめています。
 
-| Area | Implementation |
+## プロジェクト概要
+
+| 項目 | 内容 |
 | --- | --- |
-| Target board | Raspberry Pi 5 |
-| Yocto release | Scarthgap |
-| Custom layer | `meta-rpi5-can-monitor` |
-| Image recipe | `rpi5-can-monitor-image` |
-| Init system | systemd |
-| Network stack | NetworkManager |
-| Boot media | USB-first boot with SD fallback |
-| Remote access | OpenSSH with root `authorized_keys` recipe |
-| Development tools | Python 3, Git, can-utils, iproute2 |
+| ターゲットボード | Raspberry Pi 5 |
+| Yoctoリリース | Scarthgap |
+| カスタムレイヤ | `meta-rpi5-can-monitor` |
+| イメージレシピ | `rpi5-can-monitor-image` |
+| initシステム | systemd |
+| ネットワーク管理 | NetworkManager |
+| 起動メディア | USB優先ブート、SDカードフォールバック対応 |
+| リモートアクセス | OpenSSH + root `authorized_keys` レシピ |
+| 開発ツール | Python 3, Git, can-utils, iproute2 |
 
-## Implemented Features
+## 実装済み機能
 
-- Custom Yocto layer for Raspberry Pi 5 CAN monitor work
-- Custom image recipe based on `core-image-base`
-- USB boot support for Raspberry Pi 5
-- USB-first boot behavior with SD card fallback
-- systemd-based init configuration
-- NetworkManager installation and Wi-Fi auto-connect recipe
-- OpenSSH server for remote access
-- Root SSH public key installation recipe
-- Python 3 runtime
-- Git, can-utils, and iproute2 included in the image
-- Utility script for extracting generated `.wic.bz2` images
+- Raspberry Pi 5 CAN監視用途向けのカスタムYoctoレイヤ
+- `core-image-base` をベースにしたカスタムイメージレシピ
+- Raspberry Pi 5のUSBブート対応
+- USB優先ブートとSDカードフォールバック
+- systemdベースのinit構成
+- NetworkManagerの導入とWi-Fi自動接続レシピ
+- リモートアクセス用OpenSSH
+- rootユーザー向けSSH公開鍵インストールレシピ
+- Python 3ランタイム
+- Git、can-utils、iproute2の追加
+- 生成された `.wic.bz2` を展開する補助スクリプト
 
-## Repository Layout
+## リポジトリ構成
 
 ```text
 meta-rpi5-can-monitor/
@@ -64,9 +66,9 @@ meta-rpi5-can-monitor/
     └── troubleshooting.md
 ```
 
-## Layer Setup
+## レイヤ構成
 
-The tested Yocto workspace is organized as:
+検証に使用したYoctoワークスペースは以下の構成です。
 
 ```text
 ~/yocto/
@@ -77,27 +79,27 @@ The tested Yocto workspace is organized as:
 └── meta-rpi5-can-monitor/
 ```
 
-Add the layer to `build-rpi5/conf/bblayers.conf`:
+`build-rpi5/conf/bblayers.conf` にカスタムレイヤを追加します。
 
 ```conf
 BBLAYERS += " /home/tshig/yocto/meta-rpi5-can-monitor "
 ```
 
-The layer is compatible with Yocto Scarthgap:
+このレイヤはYocto Scarthgap向けです。
 
 ```conf
 LAYERSERIES_COMPAT_meta-rpi5-can-monitor = "scarthgap"
 ```
 
-## Build Configuration
+## ビルド設定
 
-Use Raspberry Pi 5 as the target machine:
+ターゲットMACHINEはRaspberry Pi 5です。
 
 ```conf
 MACHINE = "raspberrypi5"
 ```
 
-Enable systemd and USB root partition handling in `build-rpi5/conf/local.conf`:
+`build-rpi5/conf/local.conf` では、systemd化とUSB rootfs向け設定を行います。
 
 ```conf
 LICENSE_FLAGS_ACCEPTED += "synaptics-killswitch"
@@ -117,11 +119,11 @@ VIRTUAL-RUNTIME_initscripts = ""
 DISTRO_FEATURES:append = " usrmerge"
 ```
 
-## Secrets and Local Templates
+## 秘密情報とテンプレート
 
-Private credentials are intentionally not committed.
+Wi-FiパスワードやSSH公開鍵など、個人環境に依存する情報はコミットしません。
 
-Before building a personalized image, copy the example files and replace the placeholders:
+ビルド前にテンプレートをコピーし、プレースホルダーを実際の値に置き換えます。
 
 ```bash
 cp recipes-core/ssh/root-authorized-keys/files/authorized_keys.example \
@@ -131,16 +133,16 @@ cp recipes-connectivity/networkmanager/networkmanager-config/files/Buffalo-5G-E9
    recipes-connectivity/networkmanager/networkmanager-config/files/Buffalo-5G-E960.nmconnection
 ```
 
-Then edit:
+編集対象:
 
 - `authorized_keys`
 - `Buffalo-5G-E960.nmconnection`
 
-Use real values only in the local working tree. Do not commit those generated files.
+実際の認証情報を含むファイルはローカル作業ツリーだけに置き、Gitにはコミットしません。
 
-## Build
+## ビルド
 
-From the Poky directory:
+Pokyディレクトリからビルドします。
 
 ```bash
 cd ~/yocto/poky
@@ -148,33 +150,33 @@ source oe-init-build-env build-rpi5
 bitbake rpi5-can-monitor-image
 ```
 
-Generated images are placed under:
+生成物は以下に出力されます。
 
 ```text
 build-rpi5/tmp/deploy/images/raspberrypi5/
 ```
 
-## Extract the USB Image
+## USBイメージの展開
 
-Use the helper script from the Yocto workspace root:
+Yoctoワークスペース直下から補助スクリプトを実行します。
 
 ```bash
 cd ~/yocto
 ./meta-rpi5-can-monitor/tools/extract-wic.sh
 ```
 
-Or pass an explicit deploy directory:
+deployディレクトリを明示することもできます。
 
 ```bash
 ./meta-rpi5-can-monitor/tools/extract-wic.sh \
   poky/build-rpi5/tmp/deploy/images/raspberrypi5
 ```
 
-The script finds the newest `.wic.bz2` file and expands it to `.wic`.
+このスクリプトは最新の `.wic.bz2` を探し、`.wic` として展開します。
 
-## Runtime Verification
+## 動作確認
 
-After booting the Raspberry Pi 5 image, verify the platform with:
+Raspberry Pi 5でイメージを起動した後、以下のコマンドで状態を確認します。
 
 ```bash
 systemctl --version
@@ -186,39 +188,39 @@ ip addr show wlan0
 ssh root@<raspberry-pi-ip>
 ```
 
-Expected result:
+期待される結果:
 
-- Login prompt appears correctly
-- USB boot works
-- SD boot remains available as fallback
-- Wi-Fi connects automatically after boot
-- SSH login works with the installed public key
+- ログインプロンプトが正常に表示される
+- USBブートが成功する
+- SDカードブートもフォールバックとして利用できる
+- 起動後にWi-Fiへ自動接続される
+- インストール済み公開鍵でSSHログインできる
 
-## Documentation
+## ドキュメント
 
-- [Custom layer design](docs/custom-layer.md)
-- [systemd migration](docs/systemd.md)
-- [NetworkManager and Wi-Fi auto-connect](docs/networkmanager.md)
-- [Root authorized_keys recipe](docs/authorized-keys.md)
-- [Troubleshooting](docs/troubleshooting.md)
+- [カスタムレイヤ設計](docs/custom-layer.md)
+- [systemd移行](docs/systemd.md)
+- [NetworkManagerとWi-Fi自動接続](docs/networkmanager.md)
+- [root authorized_keysレシピ](docs/authorized-keys.md)
+- [トラブルシュート](docs/troubleshooting.md)
 
-## Next Steps
+## 今後の拡張
 
-- Qt6 application
-- CAN monitor application
-- Django web monitor
-- systemd service units for applications
-- CAN interface configuration
-- Python logging utilities
+- Qt6アプリケーション
+- CAN Monitorアプリケーション
+- Django Web Monitor
+- アプリケーション用systemd service
+- CANインターフェース設定
+- Pythonログ出力ユーティリティ
 
-## Portfolio Focus
+## ポートフォリオとしての見どころ
 
-This project demonstrates:
+このプロジェクトでは、以下の実装力を示しています。
 
-- Practical Yocto layer organization
-- Raspberry Pi 5 board bring-up
-- Boot issue analysis and reproducible fixes
-- systemd and NetworkManager integration
-- Secure handling of local credentials through templates
-- A staged path from base Linux image to application-specific embedded platform
+- Yoctoカスタムレイヤの実践的な構成
+- Raspberry Pi 5のボード bring-up
+- USBブート問題の原因調査と再現可能な修正
+- systemd / NetworkManagerの組み込み
+- テンプレート化による秘密情報の安全な扱い
+- ベースLinuxイメージからアプリケーション専用組込みプラットフォームへ発展させる設計
 
