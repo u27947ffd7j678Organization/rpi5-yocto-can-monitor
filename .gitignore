@@ -20,6 +20,19 @@ cache/
 *.log
 bitbake-cookerdaemon.log
 
+# Local credentials and private network settings
+*.nmconnection
+authorized_keys
+*.pem
+*.key
+*.pub
+id_rsa*
+id_ed25519*
+
+# Keep safe templates
+!*.nmconnection.example
+!authorized_keys.example
+
 # Editor
 .vscode/
 .idea/
@@ -27,4 +40,3 @@ bitbake-cookerdaemon.log
 # OS
 .DS_Store
 Thumbs.db
-

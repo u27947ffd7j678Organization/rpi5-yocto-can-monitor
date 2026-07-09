@@ -1,101 +1,86 @@
 # Troubleshooting
 
-## Boot Stops While Waiting for microSD rootfs
+## Timed out waiting for device /dev/mmcblk0p1
 
-### Symptom
+### Problem
 
-When booting from USB memory, the kernel log appears, but boot stops near this message:
+During boot, systemd waits for a fixed SD card boot partition:
 
 ```text
-Waiting for root device /dev/mmcblk0p2...
-sda: sda1 sda2
-[sda] Attached SCSI removable disk
+Timed out waiting for device /dev/mmcblk0p1
 ```
+
+This can delay or block a USB-booted system.
 
 ### Cause
 
-The USB device is detected as `sda1` and `sda2`, but `cmdline.txt` still tells the kernel to use the microSD root partition:
+The default `fstab` referenced the SD card boot partition as a required device. When booting from USB, that partition may not exist, even though the USB root filesystem is valid.
+
+### Solution
+
+Extend `base-files` with a bbappend:
 
 ```text
-root=/dev/mmcblk0p2
+recipes-core/base-files/base-files_%.bbappend
 ```
 
-### Investigation
+Install a custom `fstab`:
 
-Check the `.wic` partition layout:
+```text
+recipes-core/base-files/base-files/fstab
+```
+
+The custom file keeps the root filesystem on `/dev/root`, and marks boot partitions as optional:
+
+```fstab
+/dev/root      /          auto  defaults  1  1
+/dev/mmcblk0p1 /boot      vfat  defaults,nofail,x-systemd.device-timeout=1s  0  0
+/dev/sda1      /boot-usb  vfat  defaults,nofail,x-systemd.device-timeout=1s  0  0
+```
+
+### Result
+
+- USB boot works
+- SD boot still works
+- Missing boot media does not block startup
+- Login prompt appears correctly
+
+## Wi-Fi Does Not Connect
+
+Check that the real `.nmconnection` file exists before building:
 
 ```bash
-fdisk -l tmp/deploy/images/raspberrypi5/core-image-base-raspberrypi5.rootfs.wic
+ls recipes-connectivity/networkmanager/networkmanager-config/files/*.nmconnection
 ```
 
-Observed layout:
+Check that the installed profile is mode `0600` in the recipe:
 
-```text
-Partition 1 : FAT32 130MB
-Partition 2 : Linux 239MB
+```bitbake
+install -m 600 ...
 ```
 
-Mount the boot partition and inspect `cmdline.txt`:
+On the target:
 
 ```bash
-sudo losetup -Pf tmp/deploy/images/raspberrypi5/core-image-base-raspberrypi5.rootfs.wic
-sudo mkdir -p /mnt/boot
-sudo mount /dev/loop0p1 /mnt/boot
-cat /mnt/boot/cmdline.txt
+systemctl status NetworkManager
+nmcli device
+nmcli connection show
+journalctl -u NetworkManager -b
 ```
 
-Initial content:
+## SSH Key Login Fails
 
-```text
-dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootwait net.ifnames=0
-```
-
-### Temporary Fix
-
-Edit `cmdline.txt` to use the USB root partition:
-
-```text
-dwc_otg.lpm_enable=0 root=/dev/sda2 rootfstype=ext4 rootwait net.ifnames=0
-```
-
-### Reproducible Fix
-
-Set the root partition from Yocto configuration instead of editing the generated image manually.
-
-Add this to `build-rpi5/conf/local.conf`:
-
-```conf
-CMDLINE_ROOT_PARTITION = "/dev/sda2"
-```
-
-After rebuilding, confirm that the generated `.wic` contains:
-
-```text
-dwc_otg.lpm_enable=0 root=/dev/sda2 rootfstype=ext4 rootwait net.ifnames=0
-```
-
-## WSL Build Stability
-
-Yocto builds can use a large amount of disk space and generate heavy I/O. On a 256GB C drive, the first build may run into capacity or I/O related problems.
-
-The build was stable with:
-
-- RAM: 32GB
-- Free storage: about 351GB
-- `BB_NUMBER_THREADS = "6"`
-- `PARALLEL_MAKE = "-j6"`
-- `USER_CLASSES = ""`
-
-## .wic.bz2 Extraction
-
-Yocto deploy artifacts may be symlinks or hard links. In this environment, direct `bunzip2` extraction was not always convenient.
-
-Use `bzcat` instead:
+Confirm that the real key file was copied before building:
 
 ```bash
-bzcat tmp/deploy/images/raspberrypi5/core-image-base-raspberrypi5.rootfs.wic.bz2 \
-  > tmp/deploy/images/raspberrypi5/core-image-base-raspberrypi5.rootfs.wic
+ls recipes-core/ssh/root-authorized-keys/files/authorized_keys
 ```
 
-The repository includes `scripts/extract_wic.sh` for this step.
+On the target, verify that the key was installed:
+
+```bash
+ls -l /home/root/.ssh/authorized_keys
+```
+
+The file should be readable only by root.
 

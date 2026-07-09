@@ -1,126 +1,224 @@
-# Raspberry Pi 5 Yocto USB Boot
+# Raspberry Pi 5 Yocto CAN Monitor Platform
 
-Raspberry Pi 5 向けに Yocto Project で Linux OS イメージをビルドし、USB メモリまたは USB SSD から起動できることを確認した記録です。
+A custom Yocto Linux platform for Raspberry Pi 5, built as the foundation for an embedded CAN monitoring system.
 
-最終的には、Raspberry Pi OS 上で動かしている Qt / Python / Django / CAN 関連の環境を、Yocto ベースの専用 OS イメージとして再現することを目標にしています。
+This repository presents a reusable Yocto layer, image recipe, system configuration, and supporting documentation for a Raspberry Pi 5 target that boots from USB, connects to Wi-Fi automatically, supports SSH access, and includes the core tools needed for CAN-oriented application development.
 
-## Environment
+## Project Snapshot
 
-### Build host
+| Area | Implementation |
+| --- | --- |
+| Target board | Raspberry Pi 5 |
+| Yocto release | Scarthgap |
+| Custom layer | `meta-rpi5-can-monitor` |
+| Image recipe | `rpi5-can-monitor-image` |
+| Init system | systemd |
+| Network stack | NetworkManager |
+| Boot media | USB-first boot with SD fallback |
+| Remote access | OpenSSH with root `authorized_keys` recipe |
+| Development tools | Python 3, Git, can-utils, iproute2 |
 
-- Windows PC
-- WSL2
-- Ubuntu 24.04
-- CPU: AMD Ryzen 5 7430U
-- Memory: 32GB
-- Storage: 約 351GB free
+## Implemented Features
 
-### Target
+- Custom Yocto layer for Raspberry Pi 5 CAN monitor work
+- Custom image recipe based on `core-image-base`
+- USB boot support for Raspberry Pi 5
+- USB-first boot behavior with SD card fallback
+- systemd-based init configuration
+- NetworkManager installation and Wi-Fi auto-connect recipe
+- OpenSSH server for remote access
+- Root SSH public key installation recipe
+- Python 3 runtime
+- Git, can-utils, and iproute2 included in the image
+- Utility script for extracting generated `.wic.bz2` images
 
-- Raspberry Pi 5
-- Boot media: USB 3.0 memory
-- Yocto `MACHINE`: `raspberrypi5`
-- Yocto release: `scarthgap`
-
-## Layers
+## Repository Layout
 
 ```text
-poky
-meta-openembedded
-  ├── meta-oe
-  ├── meta-python
-  └── meta-networking
-meta-raspberrypi
+meta-rpi5-can-monitor/
+├── conf/
+│   └── layer.conf
+├── recipes-core/
+│   ├── base-files/
+│   │   ├── base-files/fstab
+│   │   └── base-files_%.bbappend
+│   ├── images/
+│   │   └── rpi5-can-monitor-image.bb
+│   └── ssh/
+│       └── root-authorized-keys/
+│           ├── files/authorized_keys.example
+│           └── root-authorized-keys.bb
+├── recipes-connectivity/
+│   └── networkmanager/
+│       └── networkmanager-config/
+│           ├── files/Buffalo-5G-E960.nmconnection.example
+│           ├── files/NetworkManager.conf
+│           └── networkmanager-config.bb
+├── tools/
+│   └── extract-wic.sh
+└── docs/
+    ├── authorized-keys.md
+    ├── custom-layer.md
+    ├── networkmanager.md
+    ├── systemd.md
+    └── troubleshooting.md
 ```
 
-## Quick Start
+## Layer Setup
+
+The tested Yocto workspace is organized as:
+
+```text
+~/yocto/
+├── poky/
+│   ├── meta-openembedded/
+│   ├── meta-raspberrypi/
+│   └── build-rpi5/
+└── meta-rpi5-can-monitor/
+```
+
+Add the layer to `build-rpi5/conf/bblayers.conf`:
+
+```conf
+BBLAYERS += " /home/tshig/yocto/meta-rpi5-can-monitor "
+```
+
+The layer is compatible with Yocto Scarthgap:
+
+```conf
+LAYERSERIES_COMPAT_meta-rpi5-can-monitor = "scarthgap"
+```
+
+## Build Configuration
+
+Use Raspberry Pi 5 as the target machine:
+
+```conf
+MACHINE = "raspberrypi5"
+```
+
+Enable systemd and USB root partition handling in `build-rpi5/conf/local.conf`:
+
+```conf
+LICENSE_FLAGS_ACCEPTED += "synaptics-killswitch"
+
+BB_NUMBER_THREADS = "6"
+PARALLEL_MAKE = "-j6"
+
+USER_CLASSES = ""
+CMDLINE_ROOT_PARTITION = "/dev/sda2"
+
+DISTRO_FEATURES:append = " systemd"
+DISTRO_FEATURES:remove = "sysvinit"
+
+VIRTUAL-RUNTIME_init_manager = "systemd"
+VIRTUAL-RUNTIME_initscripts = ""
+
+DISTRO_FEATURES:append = " usrmerge"
+```
+
+## Secrets and Local Templates
+
+Private credentials are intentionally not committed.
+
+Before building a personalized image, copy the example files and replace the placeholders:
 
 ```bash
-mkdir -p ~/yocto
-cd ~/yocto
+cp recipes-core/ssh/root-authorized-keys/files/authorized_keys.example \
+   recipes-core/ssh/root-authorized-keys/files/authorized_keys
 
-git clone -b scarthgap https://github.com/yoctoproject/poky.git
-cd poky
-
-git clone -b scarthgap https://github.com/openembedded/meta-openembedded.git
-git clone -b scarthgap https://github.com/agherzan/meta-raspberrypi.git
-
-source oe-init-build-env build-rpi5
-
-bitbake-layers add-layer ../meta-openembedded/meta-oe
-bitbake-layers add-layer ../meta-openembedded/meta-python
-bitbake-layers add-layer ../meta-openembedded/meta-networking
-bitbake-layers add-layer ../meta-raspberrypi
+cp recipes-connectivity/networkmanager/networkmanager-config/files/Buffalo-5G-E960.nmconnection.example \
+   recipes-connectivity/networkmanager/networkmanager-config/files/Buffalo-5G-E960.nmconnection
 ```
 
-`build-rpi5/conf/local.conf` に `conf/local.conf.example` の設定を反映します。
+Then edit:
+
+- `authorized_keys`
+- `Buffalo-5G-E960.nmconnection`
+
+Use real values only in the local working tree. Do not commit those generated files.
+
+## Build
+
+From the Poky directory:
 
 ```bash
 cd ~/yocto/poky
 source oe-init-build-env build-rpi5
-bitbake core-image-base
+bitbake rpi5-can-monitor-image
 ```
 
-生成物は以下に出力されます。
+Generated images are placed under:
+
+```text
+build-rpi5/tmp/deploy/images/raspberrypi5/
+```
+
+## Extract the USB Image
+
+Use the helper script from the Yocto workspace root:
 
 ```bash
-tmp/deploy/images/raspberrypi5/
+cd ~/yocto
+./meta-rpi5-can-monitor/tools/extract-wic.sh
 ```
 
-USB メモリへ書き込む対象は `.wic` イメージです。`.wic.bz2` から展開する場合は `scripts/extract_wic.sh` を使います。
+Or pass an explicit deploy directory:
 
-## USB Boot Fix
-
-初期状態の `.wic` では `cmdline.txt` の rootfs 指定が microSD 向けになっていました。
-
-```text
-root=/dev/mmcblk0p2
+```bash
+./meta-rpi5-can-monitor/tools/extract-wic.sh \
+  poky/build-rpi5/tmp/deploy/images/raspberrypi5
 ```
 
-USB メモリは起動時に `sda1`, `sda2` として認識されたため、カーネルは次のようなログで停止しました。
+The script finds the newest `.wic.bz2` file and expands it to `.wic`.
 
-```text
-Waiting for root device /dev/mmcblk0p2...
-sda: sda1 sda2
+## Runtime Verification
+
+After booting the Raspberry Pi 5 image, verify the platform with:
+
+```bash
+systemctl --version
+systemctl status NetworkManager
+journalctl -b
+nmcli device
+nmcli connection show
+ip addr show wlan0
+ssh root@<raspberry-pi-ip>
 ```
 
-正式対応として、`local.conf` に以下を追加します。
+Expected result:
 
-```conf
-CMDLINE_ROOT_PARTITION = "/dev/sda2"
-```
-
-再ビルド後、生成された `.wic` の `cmdline.txt` が以下になることを確認しました。
-
-```text
-root=/dev/sda2
-```
-
-## Boot Result
-
-Raspberry Pi 5 に USB メモリを挿し、microSD を抜いた状態で起動しました。
-
-起動ログが表示され、最終的にログインプロンプトまで到達しました。
-
-```text
-login: root
-Password: なし
-root@raspberrypi5:~#
-```
-
-Yocto でビルドした Raspberry Pi 5 向け Linux イメージが、USB メモリから正常に起動することを確認できました。
+- Login prompt appears correctly
+- USB boot works
+- SD boot remains available as fallback
+- Wi-Fi connects automatically after boot
+- SSH login works with the installed public key
 
 ## Documentation
 
-- [Build log](docs/build-log.md)
-- [USB boot procedure](docs/usb-boot.md)
+- [Custom layer design](docs/custom-layer.md)
+- [systemd migration](docs/systemd.md)
+- [NetworkManager and Wi-Fi auto-connect](docs/networkmanager.md)
+- [Root authorized_keys recipe](docs/authorized-keys.md)
 - [Troubleshooting](docs/troubleshooting.md)
-- [Repository structure](docs/repository-structure.md)
 
 ## Next Steps
 
-- OpenSSH を追加し、LAN 経由で `ssh root@<IP>` できるようにする
-- Python 3、Git、can-utils、iproute2、systemd 関連ツールを追加する
-- Qt6 / Python Logger / Django Web Monitor / CAN 設定を再現する
-- `meta-rpi5-can-monitor` のような独自レイヤにアプリ、設定、systemd service、イメージレシピをまとめる
+- Qt6 application
+- CAN monitor application
+- Django web monitor
+- systemd service units for applications
+- CAN interface configuration
+- Python logging utilities
+
+## Portfolio Focus
+
+This project demonstrates:
+
+- Practical Yocto layer organization
+- Raspberry Pi 5 board bring-up
+- Boot issue analysis and reproducible fixes
+- systemd and NetworkManager integration
+- Secure handling of local credentials through templates
+- A staged path from base Linux image to application-specific embedded platform
 
